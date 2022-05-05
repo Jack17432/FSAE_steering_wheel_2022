@@ -54,6 +54,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+HAL_StatusTypeDef CAN_AddTxMessagePointer(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *pHeader, uint8_t *aData[], uint32_t *pTxMailbox);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -70,6 +72,12 @@ void Error_Handler(void);
 #define button_6_Pin GPIO_PIN_5
 #define button_6_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
+
+#define CAN_MESSAGE_ID		0x222		// CAN ID that the message will be sent under
+#define CAN_MESSAGE_DELAY	100			// Delay in milliseconds between the CAN messages
+#define CAN_PAYLOAD_SIZE	5			// Amount of used bytes in the can payload
+#define PIN_MASK			0x003FU		// Masks the all bits in the REG that are not needed
+#define NUM_ADC_CHANNLES	4			// This is for the ADC DMA
 
 /* USER CODE END Private defines */
 

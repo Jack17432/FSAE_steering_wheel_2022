@@ -32,12 +32,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define CAN_MESSAGE_ID		0x222		// CAN ID that the message will be sent under
-#define CAN_MESSAGE_DELAY	100			// Delay in milliseconds between the CAN messages
-#define CAN_PAYLOAD_SIZE	5			// Amount of used bytes in the can payload
-#define PIN_MASK			0x003FU		// Masks the all bits in the REG that are not needed
-#define NUM_ADC_CHANNLES	4			// This is for the ADC DMA
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -135,7 +129,7 @@ int main(void)
 
 
   // Sets payload to point to button input REGISTER
-  can_payload[0] = (uint8_t*) GPIOA->IDR;	// Honestly have no idea if this works and if it dosn't its a quick fix
+  can_payload[0] = GPIOA->IDR;		// Honestly have no idea if this works and if it dosn't its a quick fix
 
   // Sets the payload to point at the ADC memory
   can_payload[1] = &adc_data[0];
@@ -159,7 +153,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  HAL_CAN_AddTxMessage(&hcan, &Tx_header, can_payload, &Tx_mailbox);
+	  CAN_AddTxMessagePointer(&hcan, &Tx_header, can_payload, &Tx_mailbox);
 	  HAL_Delay(100);
   }
   /* USER CODE END 3 */
@@ -409,6 +403,118 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+}
+
+/**
+  * @brief  Add a message to the first free Tx mailbox and activate the
+  *         corresponding transmission request.
+  * @param  hcan pointer to a CAN_HandleTypeDef structure that contains
+  *         the configuration information for the specified CAN.
+  * @param  pHeader pointer to a CAN_TxHeaderTypeDef structure.
+  * @param  aData array containing the pointers to the payload data of the Tx frame.
+  * @param  pTxMailbox pointer to a variable where the function will return
+  *         the TxMailbox used to store the Tx message.
+  *         This parameter can be a value of @arg CAN_Tx_Mailboxes.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef CAN_AddTxMessagePointer(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *pHeader, uint8_t *aData[], uint32_t *pTxMailbox)
+{
+  uint32_t transmitmailbox;
+  HAL_CAN_StateTypeDef state = hcan->State;
+  uint32_t tsr = READ_REG(hcan->Instance->TSR);
+
+  /* Check the parameters */
+  assert_param(IS_CAN_IDTYPE(pHeader->IDE));
+  assert_param(IS_CAN_RTR(pHeader->RTR));
+  assert_param(IS_CAN_DLC(pHeader->DLC));
+  if (pHeader->IDE == CAN_ID_STD)
+  {
+    assert_param(IS_CAN_STDID(pHeader->StdId));
+  }
+  else
+  {
+    assert_param(IS_CAN_EXTID(pHeader->ExtId));
+  }
+  assert_param(IS_FUNCTIONAL_STATE(pHeader->TransmitGlobalTime));
+
+  if ((state == HAL_CAN_STATE_READY) ||
+      (state == HAL_CAN_STATE_LISTENING))
+  {
+    /* Check that all the Tx mailboxes are not full */
+    if (((tsr & CAN_TSR_TME0) != 0U) ||
+        ((tsr & CAN_TSR_TME1) != 0U) ||
+        ((tsr & CAN_TSR_TME2) != 0U))
+    {
+      /* Select an empty transmit mailbox */
+      transmitmailbox = (tsr & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
+
+      /* Check transmit mailbox value */
+      if (transmitmailbox > 2U)
+      {
+        /* Update error code */
+        hcan->ErrorCode |= HAL_CAN_ERROR_INTERNAL;
+
+        return HAL_ERROR;
+      }
+
+      /* Store the Tx mailbox */
+      *pTxMailbox = (uint32_t)1 << transmitmailbox;
+
+      /* Set up the Id */
+      if (pHeader->IDE == CAN_ID_STD)
+      {
+        hcan->Instance->sTxMailBox[transmitmailbox].TIR = ((pHeader->StdId << CAN_TI0R_STID_Pos) |
+                                                           pHeader->RTR);
+      }
+      else
+      {
+        hcan->Instance->sTxMailBox[transmitmailbox].TIR = ((pHeader->ExtId << CAN_TI0R_EXID_Pos) |
+                                                           pHeader->IDE |
+                                                           pHeader->RTR);
+      }
+
+      /* Set up the DLC */
+      hcan->Instance->sTxMailBox[transmitmailbox].TDTR = (pHeader->DLC);
+
+      /* Set up the Transmit Global Time mode */
+      if (pHeader->TransmitGlobalTime == ENABLE)
+      {
+        SET_BIT(hcan->Instance->sTxMailBox[transmitmailbox].TDTR, CAN_TDT0R_TGT);
+      }
+
+      /* Set up the data field */
+      WRITE_REG(hcan->Instance->sTxMailBox[transmitmailbox].TDHR,
+                ((uint32_t)*aData[7] << CAN_TDH0R_DATA7_Pos) |
+                ((uint32_t)*aData[6] << CAN_TDH0R_DATA6_Pos) |
+                ((uint32_t)*aData[5] << CAN_TDH0R_DATA5_Pos) |
+                ((uint32_t)*aData[4] << CAN_TDH0R_DATA4_Pos));
+      WRITE_REG(hcan->Instance->sTxMailBox[transmitmailbox].TDLR,
+                ((uint32_t)*aData[3] << CAN_TDL0R_DATA3_Pos) |
+                ((uint32_t)*aData[2] << CAN_TDL0R_DATA2_Pos) |
+                ((uint32_t)*aData[1] << CAN_TDL0R_DATA1_Pos) |
+                ((uint32_t)*aData[0] << CAN_TDL0R_DATA0_Pos));
+
+      /* Request transmission */
+      SET_BIT(hcan->Instance->sTxMailBox[transmitmailbox].TIR, CAN_TI0R_TXRQ);
+
+      /* Return function status */
+      return HAL_OK;
+    }
+    else
+    {
+      /* Update error code */
+      hcan->ErrorCode |= HAL_CAN_ERROR_PARAM;
+
+      return HAL_ERROR;
+    }
+  }
+  else
+  {
+    /* Update error code */
+    hcan->ErrorCode |= HAL_CAN_ERROR_NOT_INITIALIZED;
+
+    return HAL_ERROR;
+  }
 }
 
 /* USER CODE BEGIN 4 */
