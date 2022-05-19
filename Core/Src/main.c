@@ -129,7 +129,7 @@ int main(void)
 
 
   // Sets payload to point to button input REGISTER
-  can_payload[0] = GPIOA->IDR;		// Honestly have no idea if this works and if it dosn't its a quick fix
+  can_payload[0] = &GPIOA->IDR;		// Honestly have no idea if this works and if it dosn't its a quick fix
 
   // Sets the payload to point at the ADC memory
   can_payload[1] = &adc_data[0];
