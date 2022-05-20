@@ -143,19 +143,19 @@ int main(void)
   Tx_header.RTR = CAN_RTR_DATA;
   Tx_header.DLC = CAN_PAYLOAD_SIZE;
 
-  // Debug var | settings
-  uint8_t buttons;
-  uint8_t adc1, adc2, adc3, adc4;
-
-  CAN_TxHeaderTypeDef   TxHeader;
-  uint8_t               TxData[8];
-  uint32_t              TxMailbox;
-  TxHeader.IDE = CAN_ID_STD;
-  TxHeader.StdId = 0x446;
-  TxHeader.RTR = CAN_RTR_DATA;
-  TxHeader.DLC = 2;
-  TxData[0] = 50;
-  TxData[1] = 0xAA;
+//  // Debug var | settings
+//  uint8_t buttons;
+//  uint8_t adc1, adc2, adc3, adc4;
+//
+//  CAN_TxHeaderTypeDef   TxHeader;
+//  uint8_t               TxData[8];
+//  uint32_t              TxMailbox;
+//  TxHeader.IDE = CAN_ID_STD;
+//  TxHeader.StdId = 0x446;
+//  TxHeader.RTR = CAN_RTR_DATA;
+//  TxHeader.DLC = 2;
+//  TxData[0] = 50;
+//  TxData[1] = 0xAA;
 
   /* USER CODE END 2 */
 
@@ -173,10 +173,10 @@ int main(void)
 //	  adc3 = *can_payload[3];
 //	  adc4 = *can_payload[4];
 
-	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox) != HAL_OK)
-	  {
-	     Error_Handler ();
-	  }  // DEBUG CAN MESSAGE
+//	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+//	  {
+//	     Error_Handler ();
+//	  }  // DEBUG CAN MESSAGE
 
 	  CAN_AddTxMessagePointer(&hcan, &Tx_header, can_payload, &Tx_mailbox);
 	  HAL_Delay(100);
