@@ -80,10 +80,10 @@ uint32_t Tx_mailbox;
 uint8_t* can_payload[8];		// CAN payload that will point to all the values that will be sent
 
 /*
- * POS 0	|	Rotary 1
- * POS 1	|	Rotary 2
- * POS 2	|	Paddle 1
- * POS 3	|	Paddle 2
+ * POS 0	|	Paddle 1
+ * POS 1	|	Rotary 1
+ * POS 2	|	Paddle 2
+ * POS 3	|	Rotary 2
  */
 uint8_t adc_data[NUM_ADC_CHANNLES];			// Store all ADC values
 
@@ -124,7 +124,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // Calabrate the ADC and set it in DMA mode
-  // HAL_ADCEx_Calibration_Start(&hadc);		// Only needed if paddles stop working as intended
+//  HAL_ADCEx_Calibration_Start(&hadc);		// Only needed if paddles stop working as intended
   HAL_ADC_Start_DMA(&hadc, adc_data, NUM_ADC_CHANNLES);
 
 
@@ -132,10 +132,10 @@ int main(void)
   can_payload[0] = &GPIOA->IDR;		// Honestly have no idea if this works and if it dosn't its a quick fix
 
   // Sets the payload to point at the ADC memory
-  can_payload[1] = &adc_data[0];
-  can_payload[2] = &adc_data[1];
-  can_payload[3] = &adc_data[2];
-  can_payload[4] = &adc_data[3];
+  can_payload[1] = &adc_data[1];
+  can_payload[2] = &adc_data[3];
+  can_payload[3] = &adc_data[0];
+  can_payload[4] = &adc_data[2];
 
   // Set up can message header
   Tx_header.IDE = CAN_ID_STD;
@@ -143,6 +143,19 @@ int main(void)
   Tx_header.RTR = CAN_RTR_DATA;
   Tx_header.DLC = CAN_PAYLOAD_SIZE;
 
+  // Debug var | settings
+  uint8_t buttons;
+  uint8_t adc1, adc2, adc3, adc4;
+
+  CAN_TxHeaderTypeDef   TxHeader;
+  uint8_t               TxData[8];
+  uint32_t              TxMailbox;
+  TxHeader.IDE = CAN_ID_STD;
+  TxHeader.StdId = 0x446;
+  TxHeader.RTR = CAN_RTR_DATA;
+  TxHeader.DLC = 2;
+  TxData[0] = 50;
+  TxData[1] = 0xAA;
 
   /* USER CODE END 2 */
 
@@ -153,6 +166,18 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  // DEBUG VERIABLES
+//	  buttons = *can_payload[0];
+//	  adc1 = *can_payload[1];
+//	  adc2 = *can_payload[2];
+//	  adc3 = *can_payload[3];
+//	  adc4 = *can_payload[4];
+
+	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+	  {
+	     Error_Handler ();
+	  }  // DEBUG CAN MESSAGE
+
 	  CAN_AddTxMessagePointer(&hcan, &Tx_header, can_payload, &Tx_mailbox);
 	  HAL_Delay(100);
   }
@@ -228,7 +253,7 @@ static void MX_ADC_Init(void)
   hadc.Init.Resolution = ADC_RESOLUTION_8B;
   hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
-  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc.Init.LowPowerAutoWait = DISABLE;
   hadc.Init.LowPowerAutoPowerOff = DISABLE;
   hadc.Init.ContinuousConvMode = ENABLE;
@@ -236,7 +261,7 @@ static void MX_ADC_Init(void)
   hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc.Init.DMAContinuousRequests = ENABLE;
-  hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
   if (HAL_ADC_Init(&hadc) != HAL_OK)
   {
     Error_Handler();
@@ -246,7 +271,7 @@ static void MX_ADC_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_6;
   sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -405,6 +430,8 @@ static void MX_GPIO_Init(void)
 
 }
 
+/* USER CODE BEGIN 4 */
+
 /**
   * @brief  Add a message to the first free Tx mailbox and activate the
   *         corresponding transmission request.
@@ -484,15 +511,15 @@ HAL_StatusTypeDef CAN_AddTxMessagePointer(CAN_HandleTypeDef *hcan, CAN_TxHeaderT
 
       /* Set up the data field */
       WRITE_REG(hcan->Instance->sTxMailBox[transmitmailbox].TDHR,
-                ((uint32_t)*aData[7] << CAN_TDH0R_DATA7_Pos) |
-                ((uint32_t)*aData[6] << CAN_TDH0R_DATA6_Pos) |
-                ((uint32_t)*aData[5] << CAN_TDH0R_DATA5_Pos) |
-                ((uint32_t)*aData[4] << CAN_TDH0R_DATA4_Pos));
+                ((uint32_t)(*aData[7]) << CAN_TDH0R_DATA7_Pos) |
+                ((uint32_t)(*aData[6]) << CAN_TDH0R_DATA6_Pos) |
+                ((uint32_t)(*aData[5]) << CAN_TDH0R_DATA5_Pos) |
+                ((uint32_t)(*aData[4]) << CAN_TDH0R_DATA4_Pos));
       WRITE_REG(hcan->Instance->sTxMailBox[transmitmailbox].TDLR,
-                ((uint32_t)*aData[3] << CAN_TDL0R_DATA3_Pos) |
-                ((uint32_t)*aData[2] << CAN_TDL0R_DATA2_Pos) |
-                ((uint32_t)*aData[1] << CAN_TDL0R_DATA1_Pos) |
-                ((uint32_t)*aData[0] << CAN_TDL0R_DATA0_Pos));
+                ((uint32_t)(*aData[3]) << CAN_TDL0R_DATA3_Pos) |
+                ((uint32_t)(*aData[2]) << CAN_TDL0R_DATA2_Pos) |
+                ((uint32_t)(*aData[1]) << CAN_TDL0R_DATA1_Pos) |
+                ((uint32_t)(*aData[0]) << CAN_TDL0R_DATA0_Pos));
 
       /* Request transmission */
       SET_BIT(hcan->Instance->sTxMailBox[transmitmailbox].TIR, CAN_TI0R_TXRQ);
@@ -516,8 +543,6 @@ HAL_StatusTypeDef CAN_AddTxMessagePointer(CAN_HandleTypeDef *hcan, CAN_TxHeaderT
     return HAL_ERROR;
   }
 }
-
-/* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
 

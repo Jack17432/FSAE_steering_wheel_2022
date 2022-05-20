@@ -1,9 +1,11 @@
 #MicroXplorer Configuration settings - do not modify
 ADC.ContinuousConvMode=ENABLE
 ADC.DMAContinuousRequests=ENABLE
-ADC.EOCSelection=ADC_EOC_SINGLE_CONV
-ADC.IPParameters=ContinuousConvMode,Resolution,DMAContinuousRequests,EOCSelection
+ADC.EOCSelection=ADC_EOC_SEQ_CONV
+ADC.IPParameters=ContinuousConvMode,Resolution,DMAContinuousRequests,EOCSelection,Overrun,SamplingTime
+ADC.Overrun=ADC_OVR_DATA_OVERWRITTEN
 ADC.Resolution=ADC_RESOLUTION_8B
+ADC.SamplingTime=ADC_SAMPLETIME_239CYCLES_5
 CAN.CalculateBaudRate=166666
 CAN.CalculateTimeBit=6000
 CAN.CalculateTimeQuantum=2000.0
