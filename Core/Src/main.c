@@ -123,9 +123,13 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  // Calabrate the ADC and set it in DMA mode
+
+  // Calibrate the ADC and set it in DMA mode
 //  HAL_ADCEx_Calibration_Start(&hadc);		// Only needed if paddles stop working as intended
   HAL_ADC_Start_DMA(&hadc, adc_data, NUM_ADC_CHANNLES);
+
+  // Start HAL_CAN lines
+  HAL_CAN_Start(&hcan);
 
 
   // Sets payload to point to button input REGISTER
@@ -143,7 +147,7 @@ int main(void)
   Tx_header.RTR = CAN_RTR_DATA;
   Tx_header.DLC = CAN_PAYLOAD_SIZE;
 
-//  // Debug var | settings
+  // Debug var | settings
 //  uint8_t buttons;
 //  uint8_t adc1, adc2, adc3, adc4;
 //
@@ -163,9 +167,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
 	  // DEBUG VERIABLES
 //	  buttons = *can_payload[0];
 //	  adc1 = *can_payload[1];
@@ -180,7 +182,15 @@ int main(void)
 
 	  CAN_AddTxMessagePointer(&hcan, &Tx_header, can_payload, &Tx_mailbox);
 	  HAL_Delay(100);
+
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
   }
+
+  // Stops CAN system
+  HAL_CAN_Stop(&hcan);
+
   /* USER CODE END 3 */
 }
 
