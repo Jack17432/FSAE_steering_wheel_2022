@@ -47,6 +47,8 @@ CAN_HandleTypeDef hcan;
 
 I2C_HandleTypeDef hi2c1;
 
+TIM_HandleTypeDef htim14;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -58,6 +60,7 @@ static void MX_DMA_Init(void);
 static void MX_ADC_Init(void);
 static void MX_CAN_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_TIM14_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -81,11 +84,11 @@ uint8_t* can_payload[8];		// CAN payload that will point to all the values that 
 
 /*
  * POS 0	|	Paddle 1
- * POS 1	|	Rotary 1
+ * POS 4	|	Rotary 1
  * POS 2	|	Paddle 2
- * POS 3	|	Rotary 2
+ * POS 6	|	Rotary 2
  */
-uint8_t adc_data[NUM_ADC_CHANNLES];			// Store all ADC values
+uint8_t adc_data[2 * NUM_ADC_CHANNLES];			// Store all ADC values
 
 /* USER CODE END 0 */
 
@@ -121,23 +124,28 @@ int main(void)
   MX_ADC_Init();
   MX_CAN_Init();
   MX_I2C1_Init();
+  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
 
+
+  // Start HAL_CAN lines
+  HAL_CAN_Start(&hcan);
+  HAL_Delay(100);
+
+  // Start CAN IT
+  HAL_TIM_Base_Start_IT(&htim14);
 
   // Calibrate the ADC and set it in DMA mode
 //  HAL_ADCEx_Calibration_Start(&hadc);		// Only needed if paddles stop working as intended
   HAL_ADC_Start_DMA(&hadc, adc_data, NUM_ADC_CHANNLES);
-
-  // Start HAL_CAN lines
-  HAL_CAN_Start(&hcan);
 
 
   // Sets payload to point to button input REGISTER
   can_payload[0] = &GPIOA->IDR;		// Honestly have no idea if this works and if it dosn't its a quick fix
 
   // Sets the payload to point at the ADC memory
-  can_payload[1] = &adc_data[1];
-  can_payload[2] = &adc_data[3];
+  can_payload[1] = &adc_data[4];
+  can_payload[2] = &adc_data[6];
   can_payload[3] = &adc_data[0];
   can_payload[4] = &adc_data[2];
 
@@ -174,14 +182,6 @@ int main(void)
 //	  adc2 = *can_payload[2];
 //	  adc3 = *can_payload[3];
 //	  adc4 = *can_payload[4];
-
-//	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox) != HAL_OK)
-//	  {
-//	     Error_Handler ();
-//	  }  // DEBUG CAN MESSAGE
-
-	  CAN_AddTxMessagePointer(&hcan, &Tx_header, can_payload, &Tx_mailbox);
-	  HAL_Delay(100);
 
     /* USER CODE END WHILE */
 
@@ -332,11 +332,11 @@ static void MX_CAN_Init(void)
 
   /* USER CODE END CAN_Init 1 */
   hcan.Instance = CAN;
-  hcan.Init.Prescaler = 16;
+  hcan.Init.Prescaler = 2;
   hcan.Init.Mode = CAN_MODE_NORMAL;
   hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan.Init.TimeSeg1 = CAN_BS1_1TQ;
-  hcan.Init.TimeSeg2 = CAN_BS2_1TQ;
+  hcan.Init.TimeSeg1 = CAN_BS1_13TQ;
+  hcan.Init.TimeSeg2 = CAN_BS2_2TQ;
   hcan.Init.TimeTriggeredMode = DISABLE;
   hcan.Init.AutoBusOff = DISABLE;
   hcan.Init.AutoWakeUp = DISABLE;
@@ -402,6 +402,37 @@ static void MX_I2C1_Init(void)
 }
 
 /**
+  * @brief TIM14 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM14_Init(void)
+{
+
+  /* USER CODE BEGIN TIM14_Init 0 */
+
+  /* USER CODE END TIM14_Init 0 */
+
+  /* USER CODE BEGIN TIM14_Init 1 */
+
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+  htim14.Init.Prescaler = 400-1;
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim14.Init.Period = 3000-1;
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM14_Init 2 */
+
+  /* USER CODE END TIM14_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -441,6 +472,16 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  // Check which version of the timer triggered this callback and send can message
+  if (htim == &htim14 )
+  {
+	  CAN_AddTxMessagePointer(&hcan, &Tx_header, can_payload, &Tx_mailbox);
+  }
+}
+
 
 /**
   * @brief  Add a message to the first free Tx mailbox and activate the
