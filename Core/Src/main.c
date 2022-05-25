@@ -82,7 +82,8 @@ uint32_t Tx_mailbox;
  * BTYE 4	|	Paddle 2
  * BTYE 5-7	|	RESERVED
  */
-uint8_t* can_payload[8];		// CAN payload that will point to all the values that will be sent
+uint8_t* can_payload[8];		// RAW CAN payload that will point to all the values
+uint8_t post_filter_payload[8];		// CAN payload post filter
 
 /*
  * POS 0	|	Paddle 1
@@ -480,18 +481,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   // Check which version of the timer triggered this callback and send can message
   if (htim == &htim14 )
   {
-	  uint8_t final_payload[8];
-	  final_payload[0] = *can_payload[0];
+	  post_filter_payload[0] = *can_payload[0];
 
-	  final_payload[1] = EightWayRotoryEncoder(*can_payload[1]);
-	  final_payload[2] = EightWayRotoryEncoder(*can_payload[2]);
+	  post_filter_payload[1] = EightWayRotoryEncoder(*can_payload[1]);
+	  post_filter_payload[2] = EightWayRotoryEncoder(*can_payload[2]);
 
-	  final_payload[3] = *can_payload[3];
-	  final_payload[4] = *can_payload[4];
+	  post_filter_payload[3] = *can_payload[3];
+	  post_filter_payload[4] = *can_payload[4];
 
 	  // Uncoment for DEBUG transmition
 //	  Tx_header.StdId = 0x222;
-	  HAL_CAN_AddTxMessage(&hcan, &Tx_header, final_payload, &Tx_mailbox);
+	  HAL_CAN_AddTxMessage(&hcan, &Tx_header, post_filter_payload, &Tx_mailbox);
 
 //	  Tx_header.StdId = 0x111;
 //	  CAN_AddTxMessagePointer(&hcan, &Tx_header, can_payload, &Tx_mailbox);
@@ -614,28 +614,25 @@ HAL_StatusTypeDef CAN_AddTxMessagePointer(CAN_HandleTypeDef *hcan, CAN_TxHeaderT
 uint8_t EightWayRotoryEncoder(uint8_t payload) {
 
 	// Control flow solution
-	uint8_t i;
-	for (i = 1; i < 3; ++i){
-		if(0x00 <= payload && payload <= 0x20){			// Pos 1
-			return 0x01;
-		} else if(0x20 <= payload && payload <= 0x40){	// Pos 2
-			return 0x02;
-		} else if(0x40 <= payload && payload <= 0x60){	// Pos 3
-			return 0x04;
-		} else if(0x60 <= payload && payload <= 0x80){	// Pos 4
-			return 0x08;
-		} else if(0x80 <= payload && payload <= 0xA0){	// Pos 5
-			return 0x10;
-		} else if(0xA0 <= payload && payload <= 0xB0){	// Pos 6
-			return 0x20;
-		} else if(0xB0 <= payload && payload <= 0xD0){	// Pos 7
-			return 0x40;
-		} else if(0xD0 <= payload && payload <= 0xFF){	// Pos 8
-			return 0x80;
-		} else {
-			return 0x00;
-		}
+	if(0x05 <= payload && payload <= 0x20){			// Pos 1
+		return 0x01;
+	} else if(0x20 <= payload && payload <= 0x40){	// Pos 2
+		return 0x02;
+	} else if(0x40 <= payload && payload <= 0x60){	// Pos 3
+		return 0x04;
+	} else if(0x60 <= payload && payload <= 0x80){	// Pos 4
+		return 0x08;
+	} else if(0x80 <= payload && payload <= 0xA0){	// Pos 5
+		return 0x10;
+	} else if(0xA0 <= payload && payload <= 0xB0){	// Pos 6
+		return 0x20;
+	} else if(0xB0 <= payload && payload <= 0xD0){	// Pos 7
+		return 0x40;
+	} else if(0xD0 <= payload && payload <= 0xFF){	// Pos 8
+		return 0x80;
 	}
+
+	return 0x00;
 
 	// The cool boi solution that dosn't work bc i forgot i can't write to a DMA reg :(
 //	uint8_t idx;
