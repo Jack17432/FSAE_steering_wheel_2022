@@ -489,131 +489,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  post_filter_payload[3] = *can_payload[3];
 	  post_filter_payload[4] = *can_payload[4];
 
-	  // Uncoment for DEBUG transmition
-//	  Tx_header.StdId = 0x222;
 	  HAL_CAN_AddTxMessage(&hcan, &Tx_header, post_filter_payload, &Tx_mailbox);
-
-//	  Tx_header.StdId = 0x111;
-//	  CAN_AddTxMessagePointer(&hcan, &Tx_header, can_payload, &Tx_mailbox);
-  }
-}
-
-
-/**
-  * @brief  Add a message to the first free Tx mailbox and activate the
-  *         corresponding transmission request.
-  * @param  hcan pointer to a CAN_HandleTypeDef structure that contains
-  *         the configuration information for the specified CAN.
-  * @param  pHeader pointer to a CAN_TxHeaderTypeDef structure.
-  * @param  aData array containing the pointers to the payload data of the Tx frame.
-  * @param  pTxMailbox pointer to a variable where the function will return
-  *         the TxMailbox used to store the Tx message.
-  *         This parameter can be a value of @arg CAN_Tx_Mailboxes.
-  * @retval HAL status
-  */
-HAL_StatusTypeDef CAN_AddTxMessagePointer(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *pHeader, uint8_t *aData[], uint32_t *pTxMailbox)
-{
-  uint32_t transmitmailbox;
-  HAL_CAN_StateTypeDef state = hcan->State;
-  uint32_t tsr = READ_REG(hcan->Instance->TSR);
-
-  /* Check the parameters */
-  assert_param(IS_CAN_IDTYPE(pHeader->IDE));
-  assert_param(IS_CAN_RTR(pHeader->RTR));
-  assert_param(IS_CAN_DLC(pHeader->DLC));
-  if (pHeader->IDE == CAN_ID_STD)
-  {
-    assert_param(IS_CAN_STDID(pHeader->StdId));
-  }
-  else
-  {
-    assert_param(IS_CAN_EXTID(pHeader->ExtId));
-  }
-  assert_param(IS_FUNCTIONAL_STATE(pHeader->TransmitGlobalTime));
-
-  if ((state == HAL_CAN_STATE_READY) ||
-      (state == HAL_CAN_STATE_LISTENING))
-  {
-    /* Check that all the Tx mailboxes are not full */
-    if (((tsr & CAN_TSR_TME0) != 0U) ||
-        ((tsr & CAN_TSR_TME1) != 0U) ||
-        ((tsr & CAN_TSR_TME2) != 0U))
-    {
-      /* Select an empty transmit mailbox */
-      transmitmailbox = (tsr & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
-
-      /* Check transmit mailbox value */
-      if (transmitmailbox > 2U)
-      {
-        /* Update error code */
-        hcan->ErrorCode |= HAL_CAN_ERROR_INTERNAL;
-
-        return HAL_ERROR;
-      }
-
-      /* Store the Tx mailbox */
-      *pTxMailbox = (uint32_t)1 << transmitmailbox;
-
-      /* Set up the Id */
-      if (pHeader->IDE == CAN_ID_STD)
-      {
-        hcan->Instance->sTxMailBox[transmitmailbox].TIR = ((pHeader->StdId << CAN_TI0R_STID_Pos) |
-                                                           pHeader->RTR);
-      }
-      else
-      {
-        hcan->Instance->sTxMailBox[transmitmailbox].TIR = ((pHeader->ExtId << CAN_TI0R_EXID_Pos) |
-                                                           pHeader->IDE |
-                                                           pHeader->RTR);
-      }
-
-      /* Set up the DLC */
-      hcan->Instance->sTxMailBox[transmitmailbox].TDTR = (pHeader->DLC);
-
-      /* Set up the Transmit Global Time mode */
-      if (pHeader->TransmitGlobalTime == ENABLE)
-      {
-        SET_BIT(hcan->Instance->sTxMailBox[transmitmailbox].TDTR, CAN_TDT0R_TGT);
-      }
-
-      /* Set up the data field */
-      WRITE_REG(hcan->Instance->sTxMailBox[transmitmailbox].TDHR,
-                ((uint32_t)(*aData[7]) << CAN_TDH0R_DATA7_Pos) |
-                ((uint32_t)(*aData[6]) << CAN_TDH0R_DATA6_Pos) |
-                ((uint32_t)(*aData[5]) << CAN_TDH0R_DATA5_Pos) |
-                ((uint32_t)(*aData[4]) << CAN_TDH0R_DATA4_Pos));
-      WRITE_REG(hcan->Instance->sTxMailBox[transmitmailbox].TDLR,
-                ((uint32_t)(*aData[3]) << CAN_TDL0R_DATA3_Pos) |
-                ((uint32_t)(*aData[2]) << CAN_TDL0R_DATA2_Pos) |
-                ((uint32_t)(*aData[1]) << CAN_TDL0R_DATA1_Pos) |
-                ((uint32_t)(*aData[0]) << CAN_TDL0R_DATA0_Pos));
-
-      /* Request transmission */
-      SET_BIT(hcan->Instance->sTxMailBox[transmitmailbox].TIR, CAN_TI0R_TXRQ);
-
-      /* Return function status */
-      return HAL_OK;
-    }
-    else
-    {
-      /* Update error code */
-      hcan->ErrorCode |= HAL_CAN_ERROR_PARAM;
-
-      return HAL_ERROR;
-    }
-  }
-  else
-  {
-    /* Update error code */
-    hcan->ErrorCode |= HAL_CAN_ERROR_NOT_INITIALIZED;
-
-    return HAL_ERROR;
   }
 }
 
 uint8_t EightWayRotoryEncoder(uint8_t payload) {
 
-	// Control flow solution
 	if(0x05 <= payload && payload <= 0x20){			// Pos 1
 		return 0x01;
 	} else if(0x20 <= payload && payload <= 0x40){	// Pos 2
@@ -633,52 +514,6 @@ uint8_t EightWayRotoryEncoder(uint8_t payload) {
 	}
 
 	return 0x00;
-
-	// The cool boi solution that dosn't work bc i forgot i can't write to a DMA reg :(
-//	uint8_t idx;
-//	for (idx = 1; idx < 3; ++idx){
-//		*payload[idx] = (
-//			// pos 1
-//			((*payload[idx] ^ 0x80 >> 7) &
-//			(*payload[idx] ^ 0x40 >> 6) &
-//			(*payload[idx] ^ 0x20 >> 5) & 0x01) |
-//
-//			// pos 2
-//			((*payload[idx] ^ 0x80 >> 6) &
-//			(*payload[idx] ^ 0x40 >> 5) &
-//			(*payload[idx] & 0x20 >> 4) & 0x02) |
-//
-//			// pos 3
-//			((*payload[idx] ^ 0x80 >> 5) &
-//			(*payload[idx] & 0x40 >> 4) &
-//			(*payload[idx] ^ 0x20 >> 3) & 0x04) |
-//
-//			// pos 4
-//			((*payload[idx] ^ 0x80 >> 4) &
-//			(*payload[idx] & 0x40 >> 3) &
-//			(*payload[idx] & 0x20 >> 2) & 0x08) |
-//
-//			// pos 5
-//			((*payload[idx] & 0x80 >> 3) &
-//			(*payload[idx] ^ 0x40 >> 2) &
-//			(*payload[idx] ^ 0x20 >> 1) & 0x10) |
-//
-//			// pos 6
-//			((*payload[idx] & 0x80 >> 2) &
-//			(*payload[idx] ^ 0x40 >> 1) &
-//			(*payload[idx] & 0x20) & 0x20) |
-//
-//			// pos 7
-//			((*payload[idx] & 0x80 >> 1) &
-//			(*payload[idx] & 0x40) &
-//			(*payload[idx] ^ 0x20 << 1) & 0x40) |
-//
-//			// pos 8
-//			((*payload[idx] & 0x80) &
-//			(*payload[idx] & 0x40 << 1) &
-//			(*payload[idx] & 0x20 << 2) & 0x80)
-//		);
-//	}
 }
 
 /* USER CODE END 4 */
