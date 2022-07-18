@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-07-18T02:09:48.736Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36" etag="8v9XDwzO0QK4er26cCF0" version="20.1.1" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2022-07-18T06:30:47.288Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36" etag="Fmko1FBWjVj4xbZ17mCy" version="20.1.1" type="github" pages="3">
   <diagram id="ImUbdH4DBhppO3cl-vIa" name="Input Output">
     <mxGraphModel dx="916" dy="651" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -229,6 +229,47 @@
               <mxPoint x="500" y="205" />
             </Array>
           </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="zkobkLZk5fdt9Dd7-Fig" name="Task Flow">
+    <mxGraphModel dx="870" dy="618" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-1" value="Start Up" style="swimlane;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="200" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-5" value="ADC Init" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" vertex="1" parent="e0_Ztez9yLK0ivRU08m6-1">
+          <mxGeometry x="40" y="40" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-6" value="CAN Init" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" vertex="1" parent="e0_Ztez9yLK0ivRU08m6-1">
+          <mxGeometry x="40" y="160" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-7" value="DMA Init" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" vertex="1" parent="e0_Ztez9yLK0ivRU08m6-1">
+          <mxGeometry x="40" y="100" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-2" value="Main Loop" style="swimlane;startSize=23;" vertex="1" parent="1">
+          <mxGeometry x="240" y="20" width="200" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-3" value="Interups" style="swimlane;" vertex="1" parent="1">
+          <mxGeometry x="460" y="20" width="200" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-8" value="Send CAN Message" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" vertex="1" parent="e0_Ztez9yLK0ivRU08m6-3">
+          <mxGeometry x="40" y="84" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-9" value="1MicroSecond Timer" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="e0_Ztez9yLK0ivRU08m6-3">
+          <mxGeometry x="40" y="39" width="120" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-10" value="" style="endArrow=none;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="e0_Ztez9yLK0ivRU08m6-3" source="e0_Ztez9yLK0ivRU08m6-8" target="e0_Ztez9yLK0ivRU08m6-9">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-30" y="274" as="sourcePoint" />
+            <mxPoint x="20" y="224" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e0_Ztez9yLK0ivRU08m6-4" value="Shutdown" style="swimlane;" vertex="1" parent="1">
+          <mxGeometry x="680" y="20" width="200" height="200" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
