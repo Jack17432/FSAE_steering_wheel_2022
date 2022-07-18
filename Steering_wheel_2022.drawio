@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-07-18T02:07:26.151Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36" etag="JxtwlYqI9hvhqU7n9WlE" version="20.1.1" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2022-07-18T02:09:48.736Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36" etag="8v9XDwzO0QK4er26cCF0" version="20.1.1" type="github" pages="2">
   <diagram id="ImUbdH4DBhppO3cl-vIa" name="Input Output">
     <mxGraphModel dx="916" dy="651" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -132,7 +132,7 @@
             <mxPoint x="450" y="229" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="o-BQIZpxcL0AQpW9Uxza-4" value="Analog Inputs" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" vertex="1" parent="1">
+        <mxCell id="o-BQIZpxcL0AQpW9Uxza-4" value="ADC Value Array" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" vertex="1" parent="1">
           <mxGeometry x="40" y="360" width="140" height="150" as="geometry" />
         </mxCell>
         <mxCell id="o-BQIZpxcL0AQpW9Uxza-5" value="Paddle 1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" vertex="1" parent="o-BQIZpxcL0AQpW9Uxza-4">
