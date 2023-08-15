@@ -71,6 +71,7 @@ HAL_StatusTypeDef CAN_AddTxMessagePointer(CAN_HandleTypeDef *hcan, CAN_TxHeaderT
 #define button_5_GPIO_Port GPIOA
 #define button_6_Pin GPIO_PIN_5
 #define button_6_GPIO_Port GPIOA
+
 /* USER CODE BEGIN Private defines */
 
 #define CAN_MESSAGE_ID		0x222		// CAN ID that the message will be sent under
